@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+*.pdf
+.git
+.gitignore
+.dockerignore
+*.md
+openclaw-logs.txt

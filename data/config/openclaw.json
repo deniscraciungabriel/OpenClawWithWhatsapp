@@ -1,0 +1,46 @@
+{
+  "gateway": {
+    "bind": "loopback",
+    "port": 18789,
+    "auth": {
+      "token": "VCE8Y2ZhMVxI23Scpd6SH1pugJdKRGvn"
+    }
+  },
+  "llm": {
+    "provider": "ollama",
+    "baseURL": "http://ollama:11434/v1",
+    "model": "llama3.2:3b",
+    "temperature": 0.7,
+    "maxTokens": 4096,
+    "input": "text"
+  },
+  "tools": {
+    "bash": {
+      "enabled": true,
+      "timeout": 30000
+    },
+    "browser": {
+      "enabled": true,
+      "headless": true,
+      "timeout": 30000
+    },
+    "file": {
+      "enabled": true
+    }
+  },
+  "channels": [
+    {
+      "type": "whatsapp",
+      "name": "whatsapp",
+      "config": {
+        "authDir": "/home/node/.openclaw/whatsapp-auth",
+        "allowedSenders": [],
+        "replyOnlyToDirectMessages": true
+      }
+    }
+  ],
+  "memory": {
+    "enabled": true,
+    "type": "local"
+  }
+}
