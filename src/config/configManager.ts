@@ -19,6 +19,7 @@ export interface OpenClawConfig {
     temperature: number;
     maxTokens: number;
     input: string;
+    apiKey?: string;
   };
   tools: {
     bash: {
@@ -126,11 +127,21 @@ export class ConfigManager {
     if (process.env.OPENCLAW_GATEWAY_PORT) {
       config.gateway.port = parseInt(process.env.OPENCLAW_GATEWAY_PORT, 10);
     }
-    if (process.env.OLLAMA_BASE_URL) {
+    if (process.env.LLM_PROVIDER) {
+      config.llm.provider = process.env.LLM_PROVIDER;
+    }
+    if (process.env.LLM_BASE_URL) {
+      config.llm.baseURL = process.env.LLM_BASE_URL;
+    } else if (process.env.OLLAMA_BASE_URL) {
       config.llm.baseURL = process.env.OLLAMA_BASE_URL;
     }
-    if (process.env.OLLAMA_MODEL) {
+    if (process.env.LLM_MODEL) {
+      config.llm.model = process.env.LLM_MODEL;
+    } else if (process.env.OLLAMA_MODEL) {
       config.llm.model = process.env.OLLAMA_MODEL;
+    }
+    if (process.env.LLM_API_KEY) {
+      config.llm.apiKey = process.env.LLM_API_KEY;
     }
 
     return config;

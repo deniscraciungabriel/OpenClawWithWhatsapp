@@ -43,6 +43,10 @@ services:
       - OPENCLAW_BRIDGE_PORT=${OPENCLAW_BRIDGE_PORT:-18790}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-}
+      - LLM_MODEL=${LLM_MODEL:-}
+      - LLM_API_KEY=${LLM_API_KEY:-}
       - HOST_USER=${HOST_USER:-utente}
       - NODE_ENV=production
       - DISPLAY=${DISPLAY:-:0}

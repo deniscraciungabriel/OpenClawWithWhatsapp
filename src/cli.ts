@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { ConfigManager } from './config/configManager';
 import { HealthChecker } from './utils/health';
-import { OllamaProvider } from './llm/ollamaProvider';
+import { LLMProvider } from './llm/llmProvider';
 import { Logger } from './utils/logger';
 
 const logger = Logger.create('cli');
@@ -17,7 +17,7 @@ program
   .description('Show OpenClaw status')
   .action(async () => {
     const config = ConfigManager.load();
-    const llm = new OllamaProvider(config.llm);
+    const llm = new LLMProvider(config.llm);
     const connected = await llm.testConnection();
 
     console.log('OpenClaw Status');
@@ -57,7 +57,7 @@ program
   .argument('[action]', 'Action: status, list')
   .action(async (action?: string) => {
     const config = ConfigManager.load();
-    const llm = new OllamaProvider(config.llm);
+    const llm = new LLMProvider(config.llm);
 
     if (action === 'status' || !action) {
       console.log(`Current model: ${config.llm.model}`);

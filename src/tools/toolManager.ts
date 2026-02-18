@@ -2,7 +2,7 @@ import { BashTool, BashToolConfig } from './bashTool';
 import { FileTool, FileToolConfig } from './fileTool';
 import { BrowserTool, BrowserToolConfig } from './browserTool';
 import { ClaudeCodeTool, ClaudeCodeToolConfig } from './claudeCodeTool';
-import { ToolDefinition } from '../llm/ollamaProvider';
+import { ToolDefinition } from '../llm/llmProvider';
 import { Logger } from '../utils/logger';
 
 const logger = Logger.create('tool-manager');

@@ -23,12 +23,14 @@ export class ClaudeCodeTool {
   private config: ClaudeCodeToolConfig;
   private hostUser: string;
   private hostIP: string;
+  private hostHomeDir: string;
   private keyReady: boolean = false;
 
   constructor(config: ClaudeCodeToolConfig) {
     this.config = config;
     this.hostUser = process.env.HOST_USER || 'utente';
     this.hostIP = process.env.HOST_IP || this.detectHostIP();
+    this.hostHomeDir = process.env.HOST_HOME_DIR || `/home/${this.hostUser}`;
     this.ensureSSHKey();
   }
 
@@ -87,7 +89,13 @@ export class ClaudeCodeTool {
       return { output: '', error: 'SSH key not ready — check container logs', timedOut: false };
     }
 
-    const cwd = workdir || `$(pwd)`;
+    // Translate container paths to host paths (SSH runs on the host, not in the container)
+    let cwd = workdir || this.hostHomeDir;
+    if (cwd.startsWith('/host-home')) {
+      cwd = this.hostHomeDir + cwd.slice('/host-home'.length);
+    } else if (cwd.startsWith('/home/node/.openclaw/workspace')) {
+      cwd = this.hostHomeDir;
+    }
     const timeout = this.config.timeout || 300000;
 
     // Escape single quotes in prompt for shell
@@ -99,7 +107,7 @@ export class ClaudeCodeTool {
       '-o', 'UserKnownHostsFile=/dev/null',
       '-o', 'LogLevel=ERROR',
       `${this.hostUser}@${this.hostIP}`,
-      `cd ${cwd} && claude -p '${escapedPrompt}'`,
+      `source ~/.profile 2>/dev/null; source ~/.bashrc 2>/dev/null; mkdir -p ${cwd} && cd ${cwd} && claude -p '${escapedPrompt}'`,
     ];
 
     logger.info(`Running Claude Code on host via SSH (${this.hostUser}@${this.hostIP})`);

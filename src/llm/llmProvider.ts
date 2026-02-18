@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import { Logger } from '../utils/logger';
 
-const logger = Logger.create('ollama');
+const logger = Logger.create('llm');
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
@@ -46,13 +46,28 @@ export interface LLMConfig {
   temperature: number;
   maxTokens: number;
   input: string;
+  apiKey?: string;
 }
 
-export class OllamaProvider {
+export class LLMProvider {
   private config: LLMConfig;
 
   constructor(config: LLMConfig) {
     this.config = config;
+  }
+
+  private getHeaders(): Record<string, string> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+    return headers;
+  }
+
+  private isOllama(): boolean {
+    return this.config.provider === 'ollama';
   }
 
   async chat(
@@ -76,11 +91,20 @@ export class OllamaProvider {
 
     logger.debug(`Sending request to ${url}`);
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
+    let response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(body),
+        signal: controller.signal as any,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       const text = await response.text();
@@ -104,11 +128,19 @@ export class OllamaProvider {
 
   async testConnection(): Promise<boolean> {
     try {
-      const ollamaBase = this.config.baseURL.replace('/v1', '');
-      const response = await fetch(`${ollamaBase}/`, {
-        timeout: 5000,
-      } as any);
-      return response.ok;
+      if (this.isOllama()) {
+        const ollamaBase = this.config.baseURL.replace('/v1', '');
+        const response = await fetch(`${ollamaBase}/`, {
+          timeout: 5000,
+        } as any);
+        return response.ok;
+      } else {
+        const response = await fetch(`${this.config.baseURL}/models`, {
+          headers: this.getHeaders(),
+          timeout: 5000,
+        } as any);
+        return response.ok;
+      }
     } catch {
       return false;
     }
@@ -116,11 +148,20 @@ export class OllamaProvider {
 
   async listModels(): Promise<string[]> {
     try {
-      const ollamaBase = this.config.baseURL.replace('/v1', '');
-      const response = await fetch(`${ollamaBase}/api/tags`);
-      if (!response.ok) return [];
-      const data = (await response.json()) as any;
-      return (data.models || []).map((m: any) => m.name);
+      if (this.isOllama()) {
+        const ollamaBase = this.config.baseURL.replace('/v1', '');
+        const response = await fetch(`${ollamaBase}/api/tags`);
+        if (!response.ok) return [];
+        const data = (await response.json()) as any;
+        return (data.models || []).map((m: any) => m.name);
+      } else {
+        const response = await fetch(`${this.config.baseURL}/models`, {
+          headers: this.getHeaders(),
+        });
+        if (!response.ok) return [];
+        const data = (await response.json()) as any;
+        return (data.data || []).map((m: any) => m.id);
+      }
     } catch {
       return [];
     }
