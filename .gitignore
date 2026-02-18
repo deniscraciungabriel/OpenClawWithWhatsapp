@@ -3,4 +3,5 @@ dist/
 .env
 *.log
 openclaw-logs.txt
-data/config/whatsapp-auth
+data/config/whatsapp-auth/
+data/config/ssh/
