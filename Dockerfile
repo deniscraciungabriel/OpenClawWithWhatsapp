@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
+    openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -31,12 +32,16 @@ RUN groupadd -r node || true && \
 # Set working directory
 WORKDIR /home/node/app
 
+# Use a shared path for Playwright browsers so both root (install) and node (runtime) see them
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 # Copy package files
 COPY package.json tsconfig.json ./
 
 # Install dependencies
 RUN npm install && \
     npx playwright install chromium --with-deps && \
+    chmod -R o+rx /ms-playwright && \
     npm cache clean --force
 
 # Copy source code

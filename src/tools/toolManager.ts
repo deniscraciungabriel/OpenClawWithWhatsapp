@@ -1,6 +1,7 @@
 import { BashTool, BashToolConfig } from './bashTool';
 import { FileTool, FileToolConfig } from './fileTool';
 import { BrowserTool, BrowserToolConfig } from './browserTool';
+import { ClaudeCodeTool, ClaudeCodeToolConfig } from './claudeCodeTool';
 import { ToolDefinition } from '../llm/ollamaProvider';
 import { Logger } from '../utils/logger';
 
@@ -10,17 +11,22 @@ export interface ToolsConfig {
   bash: BashToolConfig;
   browser: BrowserToolConfig;
   file: FileToolConfig;
+  claudeCode?: ClaudeCodeToolConfig;
 }
 
 export class ToolManager {
   private bashTool: BashTool;
   private fileTool: FileTool;
   private browserTool: BrowserTool;
+  private claudeCodeTool: ClaudeCodeTool | null;
 
   constructor(config: ToolsConfig, workspaceDir: string) {
     this.bashTool = new BashTool(config.bash);
     this.fileTool = new FileTool(config.file, workspaceDir);
     this.browserTool = new BrowserTool(config.browser);
+    this.claudeCodeTool = config.claudeCode?.enabled
+      ? new ClaudeCodeTool(config.claudeCode)
+      : null;
   }
 
   getToolDefinitions(): ToolDefinition[] {
@@ -122,6 +128,33 @@ export class ToolManager {
       },
     });
 
+    if (this.claudeCodeTool) {
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'claude_code',
+          description:
+            'Delegate a coding task to Claude Code, an expert AI coding agent. Use this for writing code, building projects, debugging, refactoring, and any software engineering task. Claude Code can read/write files and run commands autonomously. Provide a clear, detailed prompt describing what you want built or fixed.',
+          parameters: {
+            type: 'object',
+            properties: {
+              prompt: {
+                type: 'string',
+                description:
+                  'The coding task to perform. Be specific about what to build, which files to modify, and any requirements.',
+              },
+              workdir: {
+                type: 'string',
+                description:
+                  'Working directory for the task (defaults to /home/node/.openclaw/workspace)',
+              },
+            },
+            required: ['prompt'],
+          },
+        },
+      });
+    }
+
     return tools;
   }
 
@@ -177,6 +210,23 @@ export class ToolManager {
           return `Error browsing ${args.url}: ${result.error}`;
         }
         return `Title: ${result.title}\n\n${result.content}`;
+      }
+
+      case 'claude_code': {
+        if (!this.claudeCodeTool) {
+          return 'Claude Code tool is not enabled';
+        }
+        const result = await this.claudeCodeTool.execute(
+          args.prompt as string,
+          args.workdir as string | undefined
+        );
+        if (result.error) {
+          return `Claude Code error: ${result.error}\n${result.output}`;
+        }
+        if (result.timedOut) {
+          return `Claude Code timed out.\n${result.output}`;
+        }
+        return result.output;
       }
 
       default:

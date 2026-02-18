@@ -47,6 +47,7 @@ export interface Channel {
 
 export class ChannelManager {
   private channels: Map<string, Channel> = new Map();
+  private configs: Map<string, ChannelConfig> = new Map();
   private handler: MessageHandler | null = null;
 
   constructor(configs: ChannelConfig[]) {
@@ -55,6 +56,7 @@ export class ChannelManager {
       if (channel) {
         const key = config.name || config.type;
         this.channels.set(key, channel);
+        this.configs.set(key, config);
         logger.info(`Channel registered: ${config.type} (${key})`);
       }
     }
@@ -66,6 +68,11 @@ export class ChannelManager {
 
   async startAll(): Promise<void> {
     for (const [name, channel] of this.channels) {
+      const config = this.configs.get(name);
+      if (config?.autoStart === false) {
+        logger.info(`Channel skipped (autoStart=false): ${name}`);
+        continue;
+      }
       try {
         if (this.handler) {
           await channel.start(this.handler);
@@ -75,6 +82,33 @@ export class ChannelManager {
         logger.error(`Failed to start channel ${name}: ${err}`);
       }
     }
+  }
+
+  async startChannel(name: string): Promise<void> {
+    const channel = this.channels.get(name);
+    if (!channel) {
+      throw new Error(`Channel not found: ${name}`);
+    }
+    if (channel.isConnected()) {
+      throw new Error(`Channel already running: ${name}`);
+    }
+    if (!this.handler) {
+      throw new Error('No message handler set');
+    }
+    await channel.start(this.handler);
+    logger.info(`Channel started: ${name}`);
+  }
+
+  async stopChannel(name: string): Promise<void> {
+    const channel = this.channels.get(name);
+    if (!channel) {
+      throw new Error(`Channel not found: ${name}`);
+    }
+    if (!channel.isConnected()) {
+      throw new Error(`Channel not running: ${name}`);
+    }
+    await channel.stop();
+    logger.info(`Channel stopped: ${name}`);
   }
 
   async stopAll(): Promise<void> {

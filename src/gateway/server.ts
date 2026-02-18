@@ -158,6 +158,34 @@ export class GatewayServer {
         });
       }
     );
+
+    this.app.post(
+      '/api/channels/:name/start',
+      this.authenticate.bind(this),
+      async (req: Request, res: Response) => {
+        try {
+          await this.channelManager.startChannel(req.params.name);
+          res.json({ status: 'started', channel: req.params.name });
+        } catch (err: any) {
+          logger.error(`Channel start error: ${err.message}`);
+          res.status(400).json({ error: err.message });
+        }
+      }
+    );
+
+    this.app.post(
+      '/api/channels/:name/stop',
+      this.authenticate.bind(this),
+      async (req: Request, res: Response) => {
+        try {
+          await this.channelManager.stopChannel(req.params.name);
+          res.json({ status: 'stopped', channel: req.params.name });
+        } catch (err: any) {
+          logger.error(`Channel stop error: ${err.message}`);
+          res.status(400).json({ error: err.message });
+        }
+      }
+    );
   }
 
   async start(): Promise<void> {

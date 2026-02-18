@@ -21,17 +21,22 @@
     },
     "browser": {
       "enabled": true,
-      "headless": true,
+      "headless": false,
       "timeout": 30000
     },
     "file": {
       "enabled": true
+    },
+    "claudeCode": {
+      "enabled": true,
+      "timeout": 300000
     }
   },
   "channels": [
     {
       "type": "whatsapp",
       "name": "whatsapp",
+      "autoStart": false,
       "config": {
         "authDir": "/home/node/.openclaw/whatsapp-auth",
         "allowedSenders": [],

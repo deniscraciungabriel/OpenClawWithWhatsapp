@@ -35,6 +35,10 @@ export interface OpenClawConfig {
     file: {
       enabled: boolean;
     };
+    claudeCode?: {
+      enabled: boolean;
+      timeout?: number;
+    };
   };
   channels: ChannelConfig[];
   memory: {
@@ -46,6 +50,7 @@ export interface OpenClawConfig {
 export interface ChannelConfig {
   type: string;
   name: string;
+  autoStart?: boolean;
   config: Record<string, unknown>;
 }
 
@@ -120,6 +125,12 @@ export class ConfigManager {
     }
     if (process.env.OPENCLAW_GATEWAY_PORT) {
       config.gateway.port = parseInt(process.env.OPENCLAW_GATEWAY_PORT, 10);
+    }
+    if (process.env.OLLAMA_BASE_URL) {
+      config.llm.baseURL = process.env.OLLAMA_BASE_URL;
+    }
+    if (process.env.OLLAMA_MODEL) {
+      config.llm.model = process.env.OLLAMA_MODEL;
     }
 
     return config;

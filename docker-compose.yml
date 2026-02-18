@@ -34,12 +34,18 @@ services:
     volumes:
       - ${OPENCLAW_CONFIG_DIR:-./data/config}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-./data/workspace}:/home/node/.openclaw/workspace
+      - ${HOST_HOME_DIR:-/home}:/host-home
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
     environment:
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
       - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND:-lan}
       - OPENCLAW_GATEWAY_PORT=18789
       - OPENCLAW_BRIDGE_PORT=${OPENCLAW_BRIDGE_PORT:-18790}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      - HOST_USER=${HOST_USER:-utente}
       - NODE_ENV=production
+      - DISPLAY=${DISPLAY:-:0}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:18789/health"]
       interval: 30s
